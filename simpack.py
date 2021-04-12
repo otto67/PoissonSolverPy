@@ -177,8 +177,7 @@ def read_from_file(values):
         print("Error: File not found.")
 
 if __name__ == '__main__':
-
-    print("Hello, added print statement")
+    
     sg.theme('DarkAmber')  # Add a touch of color
     # All the stuff inside your window.
     layout = [[sg.Text('File', size=(12, 1)), sg.Button('Read input file'), sg.Button('Save input')],
