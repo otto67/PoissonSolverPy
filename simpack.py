@@ -37,7 +37,7 @@ class PoissonSub(Poisson):
         return retval
 
 # Derived class to implement the right hand side  
-# and boundary conditions for FEM
+# and boundary conditions for FEM solution
 class FEMPoissonSub(FEM.Simulator):
 
     def __init__(self, params_, grid_):
