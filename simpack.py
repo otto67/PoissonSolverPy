@@ -3,6 +3,8 @@ import DiscPrms as dsc
 import PySimpleGUI as sg
 import FEM
 
+# Derived class to implement the right hand side  
+# and boundary conditions for FDM
 class PoissonSub(Poisson):
 
     def __init__(self, nno_x, nno_y):
@@ -34,6 +36,8 @@ class PoissonSub(Poisson):
 
         return retval
 
+# Derived class to implement the right hand side  
+# and boundary conditions for FEM
 class FEMPoissonSub(FEM.Simulator):
 
     def __init__(self, params_, grid_):
@@ -59,18 +63,17 @@ class FEMPoissonSub(FEM.Simulator):
         retval = 0.0
         if len(self.rhs_) == 1:  # Constant right hand side
             retval = self.rhs_[0]
-        elif len(self.rhs_) == 3: # Linear rhs
+        elif len(self.rhs_) == 3: # Linear right hand side
             retval = self.rhs_[0]*x + self.rhs_[1]*y + self.rhs_[2]
-        elif len(self.rhs_) == 6: # Quadratic rhs
+        elif len(self.rhs_) == 6: # Quadratic right hand side
             retval = self.rhs_[0]*x**2 + self.rhs_[1]*y**2 + self.rhs_[2]*x*y + \
                      self.rhs_[3]*x + self.rhs_[4]*y + self.rhs_[5]
 
         return retval
 
-
+# Parses a float from a string 
 def string2float(str):
-    # Find a dot, and split string at the dot
-    # then check if both parts of the split are digits
+
     sign = 1
     lst = str.split('.')
     if len(lst) > 2:
@@ -92,6 +95,7 @@ def string2float(str):
     print(" S2F 2: Error, ", str, " is not a valid number ")
     return 0.0
 
+# Functions to read from input form
 def parseRHS(arg, coeff):
     a = []
     lst = coeff.split(',')
@@ -120,6 +124,7 @@ def parseRHS(arg, coeff):
     else:
         return []
 
+
 def parseBC(arg):
     a = []
     a.append(string2float(arg['bclow'].strip()))
@@ -128,6 +133,7 @@ def parseBC(arg):
     a.append(string2float(arg['bcright'].strip()))
 
     return a
+
 
 def parseDomain(arg):
     temp = arg.strip()
@@ -147,7 +153,7 @@ def parseDomain(arg):
 
     return (x_min, x_max, y_min, y_max)
 
-
+# Read input values from file
 def read_from_file(values):
 
     filename = sg.PopupGetFile('Load input file', no_window=True)
@@ -239,9 +245,9 @@ if __name__ == '__main__':
             else:
                 nno = int(nnos)
 
-            solMet = values['Method of solution']
-            if (not solMet):
-                solMet = 'FDM'
+            sol_met = values['Method of solution']
+            if (not sol_met):
+                sol_met = 'FDM'
 
             # for now, assume a  box
             lx = (x_max - x_min)
@@ -250,7 +256,7 @@ if __name__ == '__main__':
             nno_y = int(nno/nno_x) # nno - nno_x
 
 
-            if solMet == 'FEM':
+            if sol_met == 'FEM':
                 print("NOTE: There is a grid dependent bug in the FEM solver")
                 print("Magnitude of solution is far too high")
                 parameters = dsc.DiscPrms(nnx=nno_x, nny=nno_y, dt=1000, t_max=2000)
@@ -268,7 +274,7 @@ if __name__ == '__main__':
                 
                 sim.solve(-1)
 
-            else:
+            else: # Finite differences
                 solver = PoissonSub(nno_x, nno_y)
                 solver.rhs_ = parseRHS(values['Right hand side'], values['rhs_coeff'].strip())
                 solver.bcs_ = parseBC(values)
@@ -277,7 +283,6 @@ if __name__ == '__main__':
                     continue
 
                 solver.solve()
-                solver.plot()
 
         if event == 'Stop':
             print('Stopping simulation')

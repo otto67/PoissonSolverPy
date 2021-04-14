@@ -82,6 +82,7 @@ class Poisson:
         for i in range(0, self.nnoy):
             for j in range(0, self.nnox):
                 self.solu[i, j] = self.phi[i * self.nnox + j]
+        self.plot()
 
     def plot(self):
 
@@ -114,13 +115,8 @@ class Poisson:
         plt.show()
 
 
-# Press the green button in the gutter to run the script.
+# Solve to verify that analytical solution is reproduced
 if __name__ == '__main__':
 
     solver = Poisson(41, 41)
     solver.solve()
-    solver.plot()
-
-#    plt.plot(x, solver.u)
-#    plt.plot(x, solver.analy)
-#    plt.show()

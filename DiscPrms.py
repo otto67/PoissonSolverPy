@@ -1,6 +1,8 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
-
+# Helper classes for discretization 
+# General grid parameters for a rectangular box
 class DiscPrms:
 
     def __init__(self, nnx=41, nny=41, dt=0.05, x_max=1, y_max=1, t_max=1, x_min=0, y_min=0):
@@ -14,7 +16,7 @@ class DiscPrms:
         self.y_min = y_min
 
 
-
+# Two-dimensional elements for FEM
 class Elm2d:
 
     def __init__(self, elem_type="4bf4gf2d"):
@@ -39,15 +41,14 @@ class Elm2d:
     def initAtItgPtBound(self, pt):
         raise NotImplementedError()
 
-
-
-class Elm4bn4gf(Elm2d):
+# Bilinear element 
+class Elm4bn4gf(Elm2d): 
 
     def __init__(self):
         super().__init__("4bf4gf2d")
         self.nbf = 4
         self.ngf = 4
-        self.l_l_c = [0,0]
+        self.l_l_c = [0,0] # Global coords for lower left corner of element
         self.dx = 0
         self.dy = 0
         self.lb = 0
@@ -62,6 +63,7 @@ class Elm4bn4gf(Elm2d):
         self.elem_no = elm_no
         self.lb = lb
 
+# Basis function in local element coordinates
     def N(self, i):
         a, b, c, d = 0,0,0,0
         x_val = self.curr_itg_pt[0]
@@ -81,6 +83,7 @@ class Elm4bn4gf(Elm2d):
 
         return (a*x_val) + (b*y_val) + (c*x_val*y_val) + d
 
+# Derivative of basis function in local element coordinates
     def dN(self, i, dir):
 
         x_val = self.curr_itg_pt[0]
@@ -147,7 +150,7 @@ class Elm4bn4gf(Elm2d):
         self.coor_at_itg_pt = [((self.dx/2) * self.curr_itg_pt[0]) + (x_0 + x_1)/2]
 
 
-# Only one type of elements in this base class
+# Represents a 2d grid. 
 class Grid2d:
     n_elms = 100
 
@@ -155,8 +158,8 @@ class Grid2d:
         self.dscprms = prms
         self.n_elms = (prms.nno_x - 1)*(prms.nno_y - 1)
         self.elem_type = elm_type
-        self.boindsWithEssBC = []
-        self.essbcnodes = {}
+        self.boinds_with_essBC = []
+        self.ess_bc_nodes = {}
         self.nno = prms.nno_x
 
     # possibly read from file here, to create a more complicated mesh
@@ -197,7 +200,7 @@ class Grid2d:
 
     def addBC(self, i, j, val):
         globdof = j*self.nno + i
-        self.essbcnodes.update({globdof: val})
+        self.ess_bc_nodes.update({globdof: val})
 
     # local node number in element to global node number
     def loc2glob(self, loc_no, e):
@@ -206,11 +209,11 @@ class Grid2d:
 #        return (self.dofmap[e][loc_no] % (self.dscprms.nno_x), self.dofmap[e][loc_no] // (self.dscprms.nno_x))
 
     def setBoindWithEssBC(self, list):
-        self.boindsWithEssBC = list
+        self.boinds_with_essBC = list
 
     def isBoNode(self, i, j):
         if (self.boNodeMap[i][j]):
-            if (self.boNodeMap[i][j][2] in self.boindsWithEssBC):
+            if (self.boNodeMap[i][j][2] in self.boinds_with_essBC):
                 return True
         return False
 

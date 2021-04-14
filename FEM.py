@@ -1,10 +1,8 @@
+# Base class for solving a PDE with FEM
 import numpy as np
 from DiscPrms import *
-import matplotlib.pyplot as plt
-import datetime
-
 import PySimpleGUI as sg
-import os.path
+
 
 class FEM:
 
@@ -55,8 +53,8 @@ class FEM:
             # Boundary conditions
             for r in range(self.grid.elems[elm].nbf):
                 globdof = self.grid.dofmap[elm][r]
-                if globdof in self.grid.essbcnodes.keys():
-                    val = self.grid.essbcnodes.get(globdof)
+                if globdof in self.grid.ess_bc_nodes.keys():
+                    val = self.grid.ess_bc_nodes.get(globdof)
                     b_e -= val*A_e[:,r]
                     A_e[r,:] = 0
                     A_e[:,r] = 0
@@ -65,9 +63,9 @@ class FEM:
 
             # Assemble into global matrix and vector
             for i in range(self.grid.elems[elm].ngf):
-                l2gi = self.grid.loc2glob(i, elm) # // self.grid.nno
+                l2gi = self.grid.loc2glob(i, elm) 
                 for j in range(self.grid.elems[elm].nbf):
-                    l2gj = self.grid.loc2glob(j, elm) # % self.grid.nno
+                    l2gj = self.grid.loc2glob(j, elm) 
                     self.grid.A[l2gi,l2gj] += A_e[i, j]
                 self.grid.b[l2gi] += b_e[i]
 
@@ -113,6 +111,9 @@ class FEM:
 
         plt.show()
 
+# Implements the integran for a Poisson equation
+# This subclass should be used for veryfying the 
+# implementation for an analytical solution
 
 class Simulator(FEM):
 
@@ -143,8 +144,7 @@ class Simulator(FEM):
         for i in range(1, elem.ngf + 1):
             for j in range(1, elem.nbf + 1):
                 for k in range(1, nsd+1):
-                    pass
-                    # elmat[i-1,j-1] += elem.N(i)*elem.dN(j, k)*elem.detJxW
+                    pass # elmat[i-1,j-1] += elem.N(i)*elem.dN(j, k)*elem.detJxW
 
     def essBC(self, x_val, y_val, bo_ind):
         if (bo_ind == 1):
@@ -162,7 +162,6 @@ class Simulator(FEM):
     # Right hand side
     def f(self, x, y):
         return 1
-
 
 
 if __name__ == '__main__':
