@@ -15,7 +15,7 @@ class FEM:
             for j in range(self.grid.nno):
                 if self.grid.isBoNode(i, j):
                     info = self.grid.boNodeMap[i][j]
-                    self.grid.addBC(i, j, self.essBC(info[0], info[1]))
+                    self.grid.addBC(i, j, self.essBC(info[0], info[1], info[2]))
 
     def essBC(self, x_val, y_val, bound_o):
         raise NotImplementedError()
