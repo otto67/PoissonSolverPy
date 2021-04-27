@@ -45,9 +45,12 @@ class FEMPoissonSub(FEM.Simulator):
         self.rhs_ = []
         self.bcs_ = [0,0,0,0]
 
-    def essBC(self, x, y):
+    def essBC(self, x, y, boind):
         dx = self.prms.x_max / (self.prms.nno_x - 1)
         dy = self.prms.y_max / (self.prms.nno_x - 1)
+
+        print(boind, " ", x," ", y)
+
         if x < dx:
             return self.bcs_[2]
         if x > 1 - dx:
@@ -127,11 +130,11 @@ def parseRHS(arg, coeff):
 
 def parseBC(arg):
     a = []
-    a.append(string2float(arg['bclow'].strip()))
+    a.append(string2float(arg['bcright'].strip()))
     a.append(string2float(arg['bcupp'].strip()))
     a.append(string2float(arg['bcleft'].strip()))
-    a.append(string2float(arg['bcright'].strip()))
-
+    a.append(string2float(arg['bclow'].strip()))
+  
     return a
 
 
@@ -191,7 +194,7 @@ if __name__ == '__main__':
                sg.InputOptionMenu(('Constant', 'Linear', 'Quadratic'), key='Right hand side', default_value='Constant', size=(7, 1)),
                sg.Text('Ax^2+By^2+Cx*y+Dx+Ey+F', size=(20, 1), auto_size_text=True, justification='left')],
               [sg.Text('Domain', size=(12, 1), auto_size_text=False, justification='left'), sg.InputText("[0,1] x [0,1]", key='Domain', size=(12, 1)),
-               sg.InputText("Enter rhs coefficients", key='rhs_coeff', size=(20, 1))],
+               sg.InputText("1", key='rhs_coeff', size=(20, 1))],
               [sg.Text('Number of nodes', size=(12, 1), auto_size_text=False, justification='left'), sg.InputText("400", key='Number of nodes', size=(12, 1))],
               [sg.Text('Solution method', size=(12, 1), auto_size_text=False, justification='left'),
                sg.InputCombo(('FDM', 'FEM'),key='Method of solution', size=(5, 1),default_value='FDM')],
@@ -216,6 +219,9 @@ if __name__ == '__main__':
 
         if event == 'Read input file':
             read_from_file(values)
+
+        if event == 'Method of solution':
+            print("Solution method changed")
 
         if event == 'Save input':
             filename = sg.PopupGetFile('Write input to file', save_as=True, no_window=True)

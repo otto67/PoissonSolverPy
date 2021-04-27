@@ -192,11 +192,11 @@ class Grid2d:
         self.boNodeMap = [[[] for i in range(self.nno)] for j in range(self.nno)]
         for j in range(self.nno):
             self.boNodeMap[0][j] = [0, j*dy, 3]
-            self.boNodeMap[self.nno-1][j] = [self.nno, j*dy, 1]
+            self.boNodeMap[self.nno-1][j] = [1, j*dy, 1]
 
         for i in range(self.nno):
             self.boNodeMap[i][0] = [i*dx, 0, 4]
-            self.boNodeMap[i][self.nno-1] = [i*dx, self.nno, 2]
+            self.boNodeMap[i][self.nno-1] = [i*dx, 1, 2]
 
     def addBC(self, i, j, val):
         globdof = j*self.nno + i
@@ -205,8 +205,6 @@ class Grid2d:
     # local node number in element to global node number
     def loc2glob(self, loc_no, e):
         return self.dofmap[e][loc_no]
-
-#        return (self.dofmap[e][loc_no] % (self.dscprms.nno_x), self.dofmap[e][loc_no] // (self.dscprms.nno_x))
 
     def setBoindWithEssBC(self, list):
         self.boinds_with_essBC = list
@@ -219,22 +217,11 @@ class Grid2d:
 
     def interpolSolution(self):
         solu = np.zeros((self.nno, self.nno))
-
         for i in range(self.nno):
             for j in range(self.nno):
                 solu[i,j] = self.phi[i*self.nno + j]
-
-        """
-        for elmno in range(self.n_elms):
-            for r in range(self.elems[elmno].ngf):
-                for s in range(self.elems[elmno].nbf):
-                    solu[self.loc2glob(r, elmno) // self.nno, self.loc2glob(s, elmno) % self.nno] += self.phi[self.loc2glob(s, elmno) % self.nno]
-        """
-
         return solu
 
-
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
 
     parameters = DiscPrms(nnx =3, nny =3, dt=1000, t_max=2000)
