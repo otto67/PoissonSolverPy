@@ -1,5 +1,6 @@
 # Test repository to learn python / git
 The code solves a Poisson equation with bc's and right hand side prescribed through a simple user interface. 
+Module simpack.py runs the program.
 ### Note 
 
 * For now, only essential (Dirichlet) boundary conditions are considered.
