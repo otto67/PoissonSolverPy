@@ -3,8 +3,6 @@ import numpy as np
 
 class Poisson:
 
-    nnoy, nnox = 41, 41
-
     def __init__(self, nnoy=41, nnox=41):
         self.nnoy = nnoy
         self.nnox = nnox
@@ -25,7 +23,7 @@ class Poisson:
 
     def assembleLinSys(self):
         h1, h2 = self.dx, self.dy
-# Fill matrix and vector. First row and last rows are assumed to be essential boundary conditions
+        # Fill matrix and right hand side vector of linear equation system 
         for i in range(self.nnox, self.nnox * (self.nnoy - 1)):
             self.A[i, i] = -2 * ((1 / (h1 ** 2)) + (1 / (h2 ** 2)))
             self.A[i, i - self.nnox] = 1 / (h2 ** 2)
@@ -37,13 +35,13 @@ class Poisson:
                 tmp1, tmp2 = j*h1, i * h2
                 self.b[i * self.nnox + j] = self.f(tmp1, tmp2)
 
-
+    # Actual (essential) boundary conditions
     def essBC(self, x, y):
         return self.analytic(x, y)
 
-
+    # Modify matrix and right hand side vector to include essential BC's
     def fillEssBC(self):
-        # Boundary conditions for upper and lower boundaries of a unit square
+        # Boundary conditions for upper and lower boundaries of a rectangle
         for i in range(0, self.nnoy):
             for j in range(0, self.nnox * self.nnoy):
                 self.A[i, j] = 0.0
@@ -53,7 +51,7 @@ class Poisson:
             self.b[i] = self.essBC(i * self.dx, 0)
             self.b[self.nnoy * (self.nnox - 1) + i] = self.essBC(i * self.dx, 1)
 
-        # Boundary conditions for left and right boundaries of A unit square
+        # Boundary conditions for left and right boundaries of a rectangle
         for i in range(0, self.nnoy):
             for j in range(0, self.nnox * self.nnoy):
                 self.A[i * self.nnox, j] = 0.0
@@ -69,10 +67,12 @@ class Poisson:
         self.fillEssBC()
         self.phi = np.linalg.solve(self.A, self.b)
 
+        # Solution along an y center line. For comparison with analytic solution
         for i in range(0, self.nnox):
             self.u[i] = self.phi[int(self.nnoy / 2) * self.nnox + i]
             self.analy[i] = self.analytic(i * self.dx, 0.5)
 
+        # Nodal values of solution
         for i in range(0, self.nnoy):
             for j in range(0, self.nnox):
                 self.solu[i, j] = self.phi[i * self.nnox + j]
@@ -85,7 +85,7 @@ class Poisson:
 
 
         fig = plt.figure(figsize=(20, 20))
-        fig.suptitle('A tale of 4 subplots')
+        fig.suptitle('Plots of solution')
 
         ax = fig.add_subplot(2, 2, 1, projection='3d')
 
@@ -99,7 +99,7 @@ class Poisson:
 
         ax = fig.add_subplot(2, 2, 3)
         ax.set_title('Fake test vector plot of u(x,y)')
-        ax.set_ylabel('Damped oscillation')
+        # ax.set_ylabel('Damped oscillation')
         plt.quiver(X, Y, self.solu, self.solu)
 
         ax = fig.add_subplot(2, 2, 4)

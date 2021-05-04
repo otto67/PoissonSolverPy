@@ -112,7 +112,7 @@ class Elm4bn4gf(Elm2d):
         print("dN : Invalid direction and number: ", dir, i)
         return 0
 
-
+    # initialize for numerical integration in domain
     def initAtItgPt(self, pt):
 
         a = 1/(3**0.5)
@@ -131,8 +131,12 @@ class Elm4bn4gf(Elm2d):
         x_1 = x_0 + self.dx
         y_1 = y_0 + self.dy
 
+        # Global coordinates transformed into "integration domain"
+        # for use in essential bc's and right hand side
         self.coor_at_itg_pt = [((self.dx/2) * self.curr_itg_pt[0]) + ((x_0 + x_1)/2), ((self.dy/2) * (self.curr_itg_pt[1])) + ((y_0 + y_1) / 2)]
 
+    # initialize for numerical integration along boundary
+    # Not yet used
     def initAtItgPtBound(self, pt):
 
         a = 1/(3**0.5)
@@ -152,8 +156,7 @@ class Elm4bn4gf(Elm2d):
 
 # Represents a 2d grid. 
 class Grid2d:
-    n_elms = 100
-
+    
     def __init__(self, prms, elm_type="4bf4gf2d"):
         self.dscprms = prms
         self.n_elms = (prms.nno_x - 1)*(prms.nno_y - 1)
@@ -162,7 +165,7 @@ class Grid2d:
         self.ess_bc_nodes = {}
         self.nno = prms.nno_x
 
-    # possibly read from file here, to create a more complicated mesh
+    # Perhaps read from file here, to create a more complicated mesh
 
         dx = prms.x_max / (self.nno - 1)
         dy = prms.y_max / (self.nno - 1)
@@ -206,6 +209,7 @@ class Grid2d:
     def loc2glob(self, loc_no, e):
         return self.dofmap[e][loc_no]
 
+    # List of boundaries along which essbc's are imposed 
     def setBoindWithEssBC(self, list):
         self.boinds_with_essBC = list
 
@@ -215,6 +219,7 @@ class Grid2d:
                 return True
         return False
 
+    # Solution at nodal points
     def interpolSolution(self):
         solu = np.zeros((self.nno, self.nno))
         for i in range(self.nno):

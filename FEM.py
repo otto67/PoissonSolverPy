@@ -4,6 +4,7 @@ from DiscPrms import *
 import PySimpleGUI as sg
 
 
+# Solves a general differential equation using FEM
 class FEM:
 
     def __init__(self, params, grid_):
@@ -111,11 +112,12 @@ class FEM:
 
         plt.show()
 
-# Implements the integran for a Poisson equation
-# This subclass should be used for veryfying the 
+# Implements the integrand for a Poisson equation
+# TODO:
+# This particular subclass should be used for veryfying the 
 # implementation for an analytical solution
 
-class Simulator(FEM):
+class PoissonFEM(FEM):
 
     def __init__(self, params, grid_):
         super().__init__(params, grid_)
@@ -134,7 +136,7 @@ class Simulator(FEM):
             elvec[i-1] += -self.f(x_val_loc, y_val_loc)*elem.N(i)*elem.detJxW
 
 
-# Note: This function os not yet implemented,
+# Note: This function is not yet implemented,
 # implying that du/dn = 0 on boundaries on which 
 # essential (Dirichlet) boundary conditions are not prescribed 
     def integrandsBound(self, elem, elmat, elvec):
@@ -170,5 +172,5 @@ if __name__ == '__main__':
     grid = Grid2d(parameters)
     boind_list = [1, 3]
     grid.setBoindWithEssBC(boind_list)
-    sim = Simulator(parameters, grid)
+    sim = PoissonFEM(params, grid_)(parameters, grid)
     sim.solve(-1)
