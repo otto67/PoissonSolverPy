@@ -7,8 +7,8 @@ import FEM
 # and boundary conditions for FDM
 class PoissonSub(Poisson):
 
-    def __init__(self, nno_x, nno_y):
-        super().__init__(nno_x, nno_y)
+    def __init__(self, nno_x, nno_y, xmax, ymax, xmin, ymin):
+        super().__init__(nno_x, nno_y, xmax, ymax, xmin, ymin)
         self.rhs_ = []
         self.bcs_ = [0,0,0,0]
 
@@ -142,16 +142,29 @@ def parse_domain(arg):
     if temp[0] != '[':
         print("Invalid domain :", temp)
         return ()
-    x_min = float(temp[1])
-    x_max = float(temp[3])
 
+    temp = temp[1:]
+    pos = temp.find(',')
+    x_min = string2float(temp[:pos].strip())
+    temp = temp[(pos+1):]
+    
+    pos = temp.find(']')
+    x_max = string2float(temp[:pos].strip())
+       
     pos = temp.find('x')
-    temp2 = temp[pos+1:].strip()
-    if temp2[0] != '[':
-        print("Invalid domain :", temp2)
+    temp = temp[pos+1:].strip()  
+
+    if temp[0] != '[':
+        print("Invalid domain :", temp)
         return ()
-    y_min = float(temp2[1])
-    y_max = float(temp2[3])
+
+    temp = temp[1:]
+    pos = temp.find(',')
+    y_min = string2float(temp[:pos])
+    temp = temp[(pos+1):]
+ 
+    pos = temp.find(']')
+    y_max = string2float(temp[:pos].strip())
 
     return (x_min, x_max, y_min, y_max)
 
@@ -257,6 +270,7 @@ if __name__ == '__main__':
             # for now, assume a  box
             lx = (x_max - x_min)
             ly = (y_max - y_min)
+            
             nno_x = int((nno*lx/ly)**0.5) 
             nno_y = int(nno/nno_x)
 
@@ -279,7 +293,7 @@ if __name__ == '__main__':
                 sim.solve(-1)
 
             else: # Finite differences
-                solver = PoissonSub(nno_x, nno_y)
+                solver = PoissonSub(nno_x, nno_y, x_max, y_max, x_min, y_min)
                 solver.rhs_ = parse_rhs(values['Right hand side'], values['rhs_coeff'].strip())
                 solver.bcs_ = parse_bc(values)
                 if not solver.rhs_:

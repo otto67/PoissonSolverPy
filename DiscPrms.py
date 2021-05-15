@@ -233,8 +233,8 @@ if __name__ == '__main__':
     print("parameters", parameters.nno_x)
     grid = Grid2d(parameters)
     grid.setBoindWithEssBC([2, 4])
-    for i in range(6):
-        for j in range(6):
+    for i in range(nnx):
+        for j in range(nny):
             if not grid.isBoNode(i, j):
                 print("Node number ", j*parameters.nno_x + i, " is not on any boundary")
             else:

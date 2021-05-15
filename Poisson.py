@@ -3,10 +3,15 @@ import numpy as np
 
 class Poisson:
 
-    def __init__(self, nnoy=41, nnox=41):
+    def __init__(self, nnox=41, nnoy=41, xmax=1, ymax=1, xmin=0, ymin=0):
         self.nnoy = nnoy
         self.nnox = nnox
-        self.dx, self.dy = 1 / (nnox - 1), 1 / (nnoy - 1)
+        self.xmax = xmax
+        self.ymax = ymax
+        self.xmin = xmin
+        self.ymin = ymin
+
+        self.dx, self.dy = (xmax - xmin) / (nnox - 1), (ymax - ymin) / (nnoy - 1)
         self.A = np.zeros((nnox * nnoy, nnoy * nnox))
         self.b = np.zeros(nnox * nnoy)
         self.phi = np.zeros((nnoy * nnox))
@@ -20,20 +25,21 @@ class Poisson:
     def analytic(self, x, y):
         return (x**4/12) + (x/12)
 
-
+    # Fill matrix and right hand side vector of linear equation system 
     def assembleLinSys(self):
+
         h1, h2 = self.dx, self.dy
-        # Fill matrix and right hand side vector of linear equation system 
         for i in range(self.nnox, self.nnox * (self.nnoy - 1)):
             self.A[i, i] = -2 * ((1 / (h1 ** 2)) + (1 / (h2 ** 2)))
             self.A[i, i - self.nnox] = 1 / (h2 ** 2)
             self.A[i, i + self.nnox] = 1 / (h2 ** 2)
             self.A[i, i - 1] = 1 / (h1 ** 2)
             self.A[i, i + 1] = 1 / (h1 ** 2)
+
         for i in range(0, self.nnoy):
             for j in range(0, self.nnox):
-                tmp1, tmp2 = j*h1, i * h2
-                self.b[i * self.nnox + j] = self.f(tmp1, tmp2)
+                x, y = j*h1, i * h2
+                self.b[i * self.nnox + j] = self.f(x, y)
 
     # Actual (essential) boundary conditions
     def essBC(self, x, y):
@@ -42,25 +48,25 @@ class Poisson:
     # Modify matrix and right hand side vector to include essential BC's
     def fillEssBC(self):
         # Boundary conditions for upper and lower boundaries of a rectangle
-        for i in range(0, self.nnoy):
+        for i in range(0, self.nnox):
             for j in range(0, self.nnox * self.nnoy):
                 self.A[i, j] = 0.0
-                self.A[self.nnoy * (self.nnox - 1) + i, j] = 0.0
+                self.A[self.nnox * (self.nnoy - 1) + i, j] = 0.0 
             self.A[i, i] = 1.0
-            self.A[self.nnoy * (self.nnox - 1) + i, self.nnoy * (self.nnox - 1) + i] = 1.0
-            self.b[i] = self.essBC(i * self.dx, 0)
-            self.b[self.nnoy * (self.nnox - 1) + i] = self.essBC(i * self.dx, 1)
+            self.A[((self.nnoy - 1) * self.nnox) + i, (self.nnox * (self.nnoy - 1)) + i] = 1.0
+            self.b[i] = self.essBC(i * self.dx, self.ymin)
+            self.b[self.nnox * (self.nnoy - 1) + i] = self.essBC(i * self.dx, self.ymax)
 
         # Boundary conditions for left and right boundaries of a rectangle
         for i in range(0, self.nnoy):
             for j in range(0, self.nnox * self.nnoy):
-                self.A[i * self.nnox, j] = 0.0
-                self.A[(self.nnoy - 1) + (i * self.nnoy), j] = 0.0
-            self.A[i * self.nnoy, i * self.nnoy] = 1.0
-            self.A[(self.nnoy - 1) + i * self.nnoy, (self.nnoy - 1) + i * self.nnoy] = 1.0
-            self.b[i * self.nnoy] = self.essBC(0, i * self.dy)
-            self.b[(self.nnoy - 1) + (i * self.nnoy)] = self.essBC(1, i * self.dy)
-
+                self.A[i * self.nnox, j] = 0.0 
+                self.A[(self.nnox - 1) + (i * self.nnox), j] = 0.0
+            self.A[i * self.nnox, i * self.nnox] = 1.0
+            self.A[(self.nnox - 1) + i * self.nnox, (self.nnox - 1) + i * self.nnox] = 1.0
+            self.b[i * self.nnox] = self.essBC(self.xmin, i * self.dy)
+            self.b[(self.nnox - 1) + (i * self.nnox)] = self.essBC(self.xmax, i * self.dy)
+        
     def solve(self):
 
         self.assembleLinSys()
@@ -80,7 +86,8 @@ class Poisson:
 
     def plot(self):
 
-        x = y = np.arange(0.0, 1.0, 1 / self.nnoy)
+        x = np.arange(self.xmin, self.xmax, (self.xmax - self.xmin) / self.nnox)
+        y = np.arange(self.ymin, self.ymax, (self.ymax - self.ymin) / self.nnoy)
         X, Y = np.meshgrid(x, y)
 
 
@@ -108,9 +115,20 @@ class Poisson:
 
         plt.show()
 
+    # Compare nodal values of solution
+    def compare2analytic(self):
+
+        l2error = 0.0        
+        for i in range(self.nnoy):
+            for j in range (self.nnox):
+                l2error += (self.solu[i,j] - self.analytic(j * self.dx, i*self.dy))**2 
+        l2error = l2error**(0.5)
+
+        print("L2 error is " + str(l2error)) 
 
 # Solve to verify that analytical solution is reproduced
 if __name__ == '__main__':
 
-    solver = Poisson(41, 41)
+    solver = Poisson(68, 38, 2, 1, -1, -1)
     solver.solve()
+    solver.compare2analytic()
