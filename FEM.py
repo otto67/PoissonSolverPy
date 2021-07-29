@@ -2,6 +2,7 @@
 import numpy as np
 from DiscPrms import *
 import PySimpleGUI as sg
+import ComboPlot as plotter
 
 
 # Solves a general differential equation using FEM
@@ -12,8 +13,8 @@ class FEM:
         self.grid = grid_
 
     def fillEssBC(self):
-        for i in range(self.grid.nno):
-            for j in range(self.grid.nno):
+        for i in range(self.prms.nno_x):
+            for j in range(self.prms.nno_y):
                 if self.grid.isBoNode(i, j):
                     info = self.grid.boNodeMap[i][j]
                     self.grid.addBC(i, j, self.essBC(info[0], info[1], info[2]))
@@ -80,49 +81,17 @@ class FEM:
             self.assembleLinEqSys(time)
             self.grid.phi = np.linalg.solve(self.grid.A, self.grid.b)
             sol = self.grid.interpolSolution()
-            self.plot(sol)
+            plotter.plot(sol, 1/self.prms.nno_x)
 
-    def plot(self, solu):
-
-        x = y = np.arange(0.0, 1.0, 1 / self.prms.nno_y)
-        X, Y = np.meshgrid(x, y)
-
-
-        fig = plt.figure(figsize=(20, 20))
-        fig.suptitle('NOTE: There is a bug in the FEM solver')
-
-        ax = fig.add_subplot(2, 2, 1, projection='3d')
-
-        ax.plot_surface(X, Y, solu, cmap='viridis', edgecolor='none')
-        ax.set_title('Surface plot u(x,y)')
-
-        ax = fig.add_subplot(2, 2, 2)
-        ax.set_title('2D projection of u(x,y)')
-        plt.imshow(solu, cmap='hot')
-        plt.colorbar()
-
-        ax = fig.add_subplot(2, 2, 3)
-        ax.set_title('Fake test vector plot of u(x,y)')
-        ax.set_ylabel('Damped oscillation')
-        plt.quiver(X, Y, solu, solu)
-
-        ax = fig.add_subplot(2, 2, 4)
-        ax.set_title('Contour lines for u(x,y)')
-        plt.contour(X, Y, solu)
-
-        plt.show()
 
 # Implements the integrand for a Poisson equation
-# TODO:
-# This particular subclass should be used for veryfying the 
+# This particular subclass is used for veryfying the 
 # implementation for an analytical solution
 
 class PoissonFEM(FEM):
 
     def __init__(self, params, grid_):
         super().__init__(params, grid_)
-        self.rhs_ = []
-        self.bcs_ = [0,0,0,0]
 
     def integrands(self, elem, elmat, elvec):
         x_val_loc = elem.coor_at_itg_pt[0]
@@ -148,29 +117,34 @@ class PoissonFEM(FEM):
                 for k in range(1, nsd+1):
                     pass # elmat[i-1,j-1] += elem.N(i)*elem.dN(j, k)*elem.detJxW
 
-    def essBC(self, x_val, y_val, bo_ind):
-        if (bo_ind == 1):
-            return 0.0 # x_val**2
-        if (bo_ind == 3):
-            return 0.0 # x_val**2
-        if (bo_ind == 2):
-            return 0.0 # x_val**2  # x_val*x_val*x_val
-        if (bo_ind == 4):
-            return 0.0 # x_val**2  # x_val*x_val*x_val
-
-        print("essBC : Something's wrong")
-        return -999999999999
-
     # Right hand side
     def f(self, x, y):
-        return 1
+        return x*x
+    # Analytic solution for test
+    def analytic(self, x, y):
+        return (x**4/12) + (x/12)
+    
+    def essBC(self, x_val, y_val, bo_ind):
+        return self.analytic(x_val, y_val)
+
+    def compare2analytic(self):
+
+        sol = self.grid.interpolSolution()
+        l2error = 0.0        
+        for i in range(self.prms.nno_y):
+            for j in range (self.prms.nno_x):
+                l2error += (sol[i,j] - self.analytic(j * self.prms.dx, i*self.prms.dy))**2 
+        l2error = l2error**(0.5)
+
+        print("L2 error is " + str(l2error)) 
 
 
 if __name__ == '__main__':
 
-    parameters = DiscPrms(nnx=51, nny=51, dt=-1, t_max=-1)
+    parameters = DiscPrms(nnx=3, nny=3, dt=-1, t_max=-1)
     grid = Grid2d(parameters)
-    boind_list = [1, 3]
+    boind_list = [1, 2, 3, 4]
     grid.setBoindWithEssBC(boind_list)
-    sim = PoissonFEM(params, grid_)(parameters, grid)
+    sim = PoissonFEM(parameters, grid)
     sim.solve(-1)
+    sim.compare2analytic()

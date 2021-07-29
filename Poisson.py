@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import ComboPlot as plotter
 
 class Poisson:
 
@@ -82,39 +83,9 @@ class Poisson:
         for i in range(0, self.nnoy):
             for j in range(0, self.nnox):
                 self.solu[i, j] = self.phi[i * self.nnox + j]
-        self.plot()
+        plotter.plot(self.solu, 1/self.nnox)
 
-    def plot(self):
-
-        x = np.arange(self.xmin, self.xmax, (self.xmax - self.xmin) / self.nnox)
-        y = np.arange(self.ymin, self.ymax, (self.ymax - self.ymin) / self.nnoy)
-        X, Y = np.meshgrid(x, y)
-
-
-        fig = plt.figure(figsize=(20, 20))
-        fig.suptitle('Plots of solution')
-
-        ax = fig.add_subplot(2, 2, 1, projection='3d')
-
-        ax.plot_surface(X, Y, self.solu, cmap='viridis', edgecolor='none')
-        ax.set_title('Surface plot u(x,y)')
-
-        ax = fig.add_subplot(2, 2, 2)
-        ax.set_title('2D projection of u(x,y)')
-        plt.imshow(self.solu, cmap='hot')
-        plt.colorbar()
-
-        ax = fig.add_subplot(2, 2, 3)
-        ax.set_title('Fake test vector plot of u(x,y)')
-        # ax.set_ylabel('Damped oscillation')
-        plt.quiver(X, Y, self.solu, self.solu)
-
-        ax = fig.add_subplot(2, 2, 4)
-        ax.set_title('Contour lines for u(x,y)')
-        plt.contour(X, Y, self.solu)
-
-        plt.show()
-
+    
     # Compare nodal values of solution
     def compare2analytic(self):
 
@@ -129,6 +100,6 @@ class Poisson:
 # Solve to verify that analytical solution is reproduced
 if __name__ == '__main__':
 
-    solver = Poisson(68, 38, 2, 1, -1, -1)
+    solver = Poisson(40,40, 1, 1, 0, 0)
     solver.solve()
     solver.compare2analytic()

@@ -14,6 +14,8 @@ class DiscPrms:
         self.t_max = t_max
         self.x_min = x_min
         self.y_min = y_min
+        self.dx = x_max / (nnx - 1)
+        self.dy = y_max / (nny - 1)
 
 
 # Two-dimensional elements for FEM
@@ -163,47 +165,44 @@ class Grid2d:
         self.elem_type = elm_type
         self.boinds_with_essBC = []
         self.ess_bc_nodes = {}
-        self.nno = prms.nno_x
 
     # Perhaps read from file here, to create a more complicated mesh
 
-        dx = prms.x_max / (self.nno - 1)
-        dy = prms.y_max / (self.nno - 1)
+        dx = prms.dx
+        dy = prms.dy
 
         self.elems = []
-        for i in range(self.n_elms):
+        for e in range(self.n_elms):
             elm = Elm4bn4gf()
-            x0 = [i % (self.nno-1), i // (self.nno-1)]
-            x0[0] *= dx
-            x0[1] *= dy
+            x0 = [(e % (prms.nno_x-1))*dx, (e // (prms.nno_x-1))*dy]
 
-            elm.setPrms(x0, dx, dy, i, -1)
+            elm.setPrms(x0, dx, dy, e, -1)
             self.elems.append(elm)
 
-        self.A = np.zeros((self.nno ** 2, self.nno ** 2))
-        self.b = np.zeros(self.nno ** 2)
-        self.phi = np.zeros(self.nno ** 2)
+        self.A = np.zeros((prms.nno_x * prms.nno_y, prms.nno_y * prms.nno_x))
+        self.b = np.zeros(prms.nno_x * prms.nno_y)
+        self.phi = np.zeros(prms.nno_x * prms.nno_y)
 
         self.dofmap = []
 
+        for j in range(0, prms.nno_y-1):
+            for i in range(0, prms.nno_x-1):
+                self.dofmap.append((j*prms.nno_y + i, j*prms.nno_y + i + 1, (j+1)*prms.nno_y + i + 1, (j+1)*prms.nno_y + i))
 
-        for j in range(0, self.nno-1):
-            for i in range(0, self.nno-1):
-                self.dofmap.append((j*self.nno + i, j*self.nno + i + 1, (j+1)*self.nno + i + 1, (j+1)*self.nno + i))
-
-
-        self.boNodeMap = [[[] for i in range(self.nno)] for j in range(self.nno)]
-        for j in range(self.nno):
+       
+        self.boNodeMap = [[[] for i in range(prms.nno_x)] for j in range(prms.nno_y)]
+        for j in range(prms.nno_y):
             self.boNodeMap[0][j] = [0, j*dy, 3]
-            self.boNodeMap[self.nno-1][j] = [1, j*dy, 1]
+            self.boNodeMap[prms.nno_y-1][j] = [1, j*dy, 1]
 
-        for i in range(self.nno):
+        for i in range(prms.nno_x):
             self.boNodeMap[i][0] = [i*dx, 0, 4]
-            self.boNodeMap[i][self.nno-1] = [i*dx, 1, 2]
+            self.boNodeMap[i][prms.nno_x-1] = [i*dx, 1, 2]
 
     def addBC(self, i, j, val):
-        globdof = j*self.nno + i
+        globdof = j*self.dscprms.nno_x + i
         self.ess_bc_nodes.update({globdof: val})
+        print("Adding bc on globdof",globdof," ",val )
 
     # local node number in element to global node number
     def loc2glob(self, loc_no, e):
@@ -221,20 +220,19 @@ class Grid2d:
 
     # Solution at nodal points
     def interpolSolution(self):
-        solu = np.zeros((self.nno, self.nno))
-        for i in range(self.nno):
-            for j in range(self.nno):
-                solu[i,j] = self.phi[i*self.nno + j]
+        solu = np.zeros((self.dscprms.nno_x, self.dscprms.nno_y))
+        for i in range(self.dscprms.nno_x):
+            for j in range(self.dscprms.nno_y):
+                solu[i,j] = self.phi[i*self.dscprms.nno_x + j]
         return solu
 
 if __name__ == '__main__':
 
-    parameters = DiscPrms(nnx =3, nny =3, dt=1000, t_max=2000)
-    print("parameters", parameters.nno_x)
+    parameters = DiscPrms(nnx=3, nny =3, dt=1000, t_max=2000)
     grid = Grid2d(parameters)
     grid.setBoindWithEssBC([2, 4])
-    for i in range(nnx):
-        for j in range(nny):
+    for i in range(parameters.nno_x):
+        for j in range(parameters.nno_y):
             if not grid.isBoNode(i, j):
                 print("Node number ", j*parameters.nno_x + i, " is not on any boundary")
             else:
