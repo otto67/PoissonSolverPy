@@ -2,7 +2,7 @@
 import numpy as np
 from DiscPrms import *
 import PySimpleGUI as sg
-import ComboPlot as plotter
+import comboplot as plotter
 
 
 # Solves a general differential equation using FEM
@@ -37,7 +37,8 @@ class FEM:
 
     def numItgOverElm(self, i, time, elmat, elmvec):
         elem = self.grid.elems[i]
-        # Only one integration rule implemented so far. For Gauss rule with M=2, weights are 1
+        # Only one integration rule implemented so far. 
+        # For Gauss rule with M=2, weights are 1
         for pt in range(1, 5):
             elem.initAtItgPt(pt)
             self.integrands(elem, elmat, elmvec)
@@ -45,24 +46,26 @@ class FEM:
 
     def assembleLinEqSys(self, time):
 
-        A_e = np.zeros((self.grid.elems[0].ngf, self.grid.elems[0].nbf))  # Assume equal elements throughout
+        # Assume equal elements throughout
+        A_e = np.zeros((self.grid.elems[0].ngf, self.grid.elems[0].nbf))  
         b_e = np.zeros(self.grid.elems[0].ngf)
 
+        # integration loop
         for elm in range(self.grid.n_elms):
             self.numItgOverElm(elm, time, A_e, b_e)
-            self.numItgOverBoundary(elm, time, A_e, b_e)
+        #    self.numItgOverBoundary(elm, time, A_e, b_e)
 
             # Boundary conditions
             for r in range(self.grid.elems[elm].nbf):
-                globdof = self.grid.dofmap[elm][r]
+                globdof = self.grid.dofmap[elm][r] 
                 if globdof in self.grid.ess_bc_nodes.keys():
                     val = self.grid.ess_bc_nodes.get(globdof)
                     b_e -= val*A_e[:,r]
-                    A_e[r,:] = 0
-                    A_e[:,r] = 0
-                    A_e[r,r] = 1
+                    A_e[r,:] = 0.0
+                    A_e[:,r] = 0.0
+                    A_e[r,r] = 1.0
                     b_e[r] = val
-
+            
             # Assemble into global matrix and vector
             for i in range(self.grid.elems[elm].ngf):
                 l2gi = self.grid.loc2glob(i, elm) 
@@ -71,8 +74,8 @@ class FEM:
                     self.grid.A[l2gi,l2gj] += A_e[i, j]
                 self.grid.b[l2gi] += b_e[i]
 
-            A_e[:, :] = 0
-            b_e[:] = 0
+            A_e[:,:] = 0.0
+            b_e[:] = 0.0
 
 
     def solve(self, time):
@@ -82,7 +85,6 @@ class FEM:
             self.grid.phi = np.linalg.solve(self.grid.A, self.grid.b)
             sol = self.grid.interpolSolution()
             plotter.plot(sol, 1/self.prms.nno_x)
-
 
 # Implements the integrand for a Poisson equation
 # This particular subclass is used for veryfying the 
@@ -104,7 +106,6 @@ class PoissonFEM(FEM):
                     elmat[i-1,j-1] += elem.dN(i, k)*elem.dN(j, k)*elem.detJxW
             elvec[i-1] += -self.f(x_val_loc, y_val_loc)*elem.N(i)*elem.detJxW
 
-
 # Note: This function is not yet implemented,
 # implying that du/dn = 0 on boundaries on which 
 # essential (Dirichlet) boundary conditions are not prescribed 
@@ -119,10 +120,10 @@ class PoissonFEM(FEM):
 
     # Right hand side
     def f(self, x, y):
-        return x*x
+        return 0 # x*x
     # Analytic solution for test
     def analytic(self, x, y):
-        return (x**4/12) + (x/12)
+        return 700*x*y + x + y # (x**4/12) + (x/12)
     
     def essBC(self, x_val, y_val, bo_ind):
         return self.analytic(x_val, y_val)
@@ -141,7 +142,7 @@ class PoissonFEM(FEM):
 
 if __name__ == '__main__':
 
-    parameters = DiscPrms(nnx=3, nny=3, dt=-1, t_max=-1)
+    parameters = DiscPrms(nnx=45, nny=45, dt=-1, t_max=-1)
     grid = Grid2d(parameters)
     boind_list = [1, 2, 3, 4]
     grid.setBoindWithEssBC(boind_list)

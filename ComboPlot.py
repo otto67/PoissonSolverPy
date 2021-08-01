@@ -9,7 +9,7 @@ def plot(solu, delta):
         X, Y = np.meshgrid(x, y)
 
         fig = plt.figure(figsize=(20, 20))
-        fig.suptitle('NOTE: There is a bug in the FEM solver')
+        fig.suptitle("Simulation results \n Note that FEM solver only works for rhs=0")
 
         ax = fig.add_subplot(2, 2, 1, projection='3d')
 

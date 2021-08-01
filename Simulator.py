@@ -232,9 +232,6 @@ if __name__ == '__main__':
         if event == 'Read input file':
             read_from_file(values)
 
-        if event == 'Method of solution':
-            print("Solution method changed")
-
         if event == 'Save input':
             filename = sg.PopupGetFile('Write input to file', save_as=True, no_window=True)
             validinputs = ('right hand side', 'number of nodes', 'domain', 'method of solution', 'rhs_coeff', 'bclow', 'bcupp', 'bcleft', 'bcright')
@@ -275,8 +272,8 @@ if __name__ == '__main__':
             nno_y = int(nno/nno_x)
 
             if sol_met == 'FEM':
-                print("NOTE: There is a grid dependent bug in the FEM solver")
-                print("Magnitude of solution is far too high")
+                print("Creating FEM solver")
+                print("NOTE: There is  bug in the FEM solver. \n Works if rhs=0")
                 parameters = dsc.DiscPrms(nnx=nno_x, nny=nno_y, dt=1000, t_max=2000)
                 grid = dsc.Grid2d(parameters)
                 # For now, assume only Dirichlet BC's 
@@ -293,6 +290,7 @@ if __name__ == '__main__':
                 sim.solve(-1)
 
             else: # Finite differences
+                print("Creating FDM solver")
                 solver = PoissonSub(nno_x, nno_y, x_max, y_max, x_min, y_min)
                 solver.rhs_ = parse_rhs(values['Right hand side'], values['rhs_coeff'].strip())
                 solver.bcs_ = parse_bc(values)

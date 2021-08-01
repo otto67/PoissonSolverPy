@@ -23,8 +23,8 @@ class Elm2d:
 
     def __init__(self, elem_type="4bf4gf2d"):
         self.elm_type = elem_type
-        self.curr_itg_pt = [0, 0]
-        self.coor_at_itg_pt = [0, 0]
+        self.curr_itg_pt = [0.0, 0.0]
+        self.coor_at_itg_pt = [0.0, 0.0]
         self.detJ = 0.0
         self.detJxW = 0.0
 
@@ -60,12 +60,12 @@ class Elm4bn4gf(Elm2d):
         self.l_l_c = x0
         self.dx = lenx
         self.dy = leny
-        self.detJ = lenx*leny/4
-        self.detJxW = lenx*leny/4
+        self.detJ = (lenx*leny)/4
+        self.detJxW = (lenx*leny)/4
         self.elem_no = elm_no
         self.lb = lb
 
-# Basis function in local element coordinates
+# Basis function in integration domain coordinates
     def N(self, i):
         a, b, c, d = 0,0,0,0
         x_val = self.curr_itg_pt[0]
@@ -74,18 +74,18 @@ class Elm4bn4gf(Elm2d):
         if (i == 1):
             a = b = -1/4
             c = d = 1/4
-        if (i == 2):
+        elif (i == 2):
             a = d = 1/4
             b = c = -1/4
-        if (i == 3):
+        elif (i == 3):
             a = b = c = d = 1/4
-        if (i == 4):
+        elif (i == 4):
             a = c = -1/4
             b = d = 1/4
 
         return (a*x_val) + (b*y_val) + (c*x_val*y_val) + d
 
-# Derivative of basis function in local element coordinates
+# Derivative of basis function in integration domain coordinates
     def dN(self, i, dir):
 
         x_val = self.curr_itg_pt[0]
@@ -93,59 +93,59 @@ class Elm4bn4gf(Elm2d):
 
         if (i == 1 and dir == 1):
             return -1/4 + y_val/4
-        if (i == 1 and dir == 2):
+        elif (i == 1 and dir == 2):
             return -1/4 + x_val/4
-
-        if (i == 2 and dir == 1):
+        elif (i == 2 and dir == 1):
             return 1/4 - y_val/4
-        if (i == 2 and dir == 2):
+        elif (i == 2 and dir == 2):
             return -1/4 - x_val/4
-
-        if (i == 3 and dir == 1):
+        elif (i == 3 and dir == 1):
             return 1/4 + y_val/4
-        if (i == 3 and dir == 2):
+        elif (i == 3 and dir == 2):
             return 1/4 + x_val/4
-
-        if (i == 4 and dir == 1):
+        elif (i == 4 and dir == 1):
             return -1/4 - y_val/4
-        if (i == 4 and dir == 2):
+        elif (i == 4 and dir == 2):
             return 1/4 - x_val/4
 
         print("dN : Invalid direction and number: ", dir, i)
         return 0
 
-    # initialize for numerical integration in domain
+    # Initialize for numerical integration in domain
     def initAtItgPt(self, pt):
 
-        a = 1/(3**0.5)
+        a = 1.0/(3**(0.5))
 
         if (pt == 1):
-            self.curr_itg_pt = [a, a]
-        if (pt == 2):
+            self.curr_itg_pt = [a, a]         
+        elif (pt == 2):
             self.curr_itg_pt = [-a, a]
-        if (pt == 3):
+        elif (pt == 3):
             self.curr_itg_pt = [-a, -a]
-        if (pt == 4):
+        elif (pt == 4):
             self.curr_itg_pt = [a, -a]
-
+    
         x_0 = self.l_l_c[0]
         y_0 = self.l_l_c[1]
-        x_1 = x_0 + self.dx
-        y_1 = y_0 + self.dy
 
         # Global coordinates transformed into "integration domain"
-        # for use in essential bc's and right hand side
-        self.coor_at_itg_pt = [((self.dx/2) * self.curr_itg_pt[0]) + ((x_0 + x_1)/2), ((self.dy/2) * (self.curr_itg_pt[1])) + ((y_0 + y_1) / 2)]
+        # for use in right hand side
+#        self.coor_at_itg_pt = [x_0 + (self.dx/2.0) * (self.curr_itg_pt[0] + 1.0), 
+#        y_0 + (self.dy/2.0) * (self.curr_itg_pt[1] + 1.0)]
+        self.coor_at_itg_pt = [x_0 + ((self.dx/2.0) * (self.curr_itg_pt[0] + 1.0)), 
+        y_0 + ((self.dy/2.0) * (self.curr_itg_pt[1] + 1.0))]
 
-    # initialize for numerical integration along boundary
+
+
+    # Initialize for numerical integration along boundary
     # Not yet used
     def initAtItgPtBound(self, pt):
 
-        a = 1/(3**0.5)
+        a = 1/(3**(0.5))
 
         if (pt == 1):
             self.curr_itg_pt = [-a]
-        if (pt == 2):
+        elif (pt == 2):
             self.curr_itg_pt = [a]
 
         x_0 = self.l_l_c[0]
@@ -153,7 +153,7 @@ class Elm4bn4gf(Elm2d):
         x_1 = x_0 + self.dx
         y_1 = y_0 + self.dy
 
-        self.coor_at_itg_pt = [((self.dx/2) * self.curr_itg_pt[0]) + (x_0 + x_1)/2]
+        self.coor_at_itg_pt = [((self.dx/2) * (self.curr_itg_pt[0] +1))]
 
 
 # Represents a 2d grid. 
@@ -178,7 +178,7 @@ class Grid2d:
 
             elm.setPrms(x0, dx, dy, e, -1)
             self.elems.append(elm)
-
+           
         self.A = np.zeros((prms.nno_x * prms.nno_y, prms.nno_y * prms.nno_x))
         self.b = np.zeros(prms.nno_x * prms.nno_y)
         self.phi = np.zeros(prms.nno_x * prms.nno_y)
@@ -202,7 +202,6 @@ class Grid2d:
     def addBC(self, i, j, val):
         globdof = j*self.dscprms.nno_x + i
         self.ess_bc_nodes.update({globdof: val})
-        print("Adding bc on globdof",globdof," ",val )
 
     # local node number in element to global node number
     def loc2glob(self, loc_no, e):
@@ -228,7 +227,7 @@ class Grid2d:
 
 if __name__ == '__main__':
 
-    parameters = DiscPrms(nnx=3, nny =3, dt=1000, t_max=2000)
+    parameters = DiscPrms(nnx=17, nny =17, dt=1000, t_max=2000)
     grid = Grid2d(parameters)
     grid.setBoindWithEssBC([2, 4])
     for i in range(parameters.nno_x):

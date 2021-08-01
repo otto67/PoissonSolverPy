@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import ComboPlot as plotter
+import comboplot as plotter
 
 class Poisson:
 
@@ -83,6 +83,7 @@ class Poisson:
         for i in range(0, self.nnoy):
             for j in range(0, self.nnox):
                 self.solu[i, j] = self.phi[i * self.nnox + j]
+        
         plotter.plot(self.solu, 1/self.nnox)
 
     
@@ -100,6 +101,6 @@ class Poisson:
 # Solve to verify that analytical solution is reproduced
 if __name__ == '__main__':
 
-    solver = Poisson(40,40, 1, 1, 0, 0)
+    solver = Poisson(11,11, 1, 1, 0, 0)
     solver.solve()
     solver.compare2analytic()
