@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import comboplot as plotter
+from RHS import RHS
 
 class Poisson:
 
@@ -16,12 +17,10 @@ class Poisson:
         self.A = np.zeros((nnox * nnoy, nnoy * nnox))
         self.b = np.zeros(nnox * nnoy)
         self.phi = np.zeros((nnoy * nnox))
-        self.u = np.zeros(nnox)
         self.analy = np.zeros(nnox)
         self.solu = np.zeros((nnoy, nnox))
 
-    def f(self, x, y):
-        return x*x
+        self.rhs = RHS()
 
     def analytic(self, x, y):
         return (x**4/12) + (x/12)
@@ -40,10 +39,10 @@ class Poisson:
         for i in range(0, self.nnoy):
             for j in range(0, self.nnox):
                 x, y = j*h1, i * h2
-                self.b[i * self.nnox + j] = self.f(x, y)
+                self.b[i * self.nnox + j] = self.rhs.f(x, y)
 
     # Actual (essential) boundary conditions
-    def essBC(self, x, y):
+    def essBC(self, x, y, boind):
         return self.analytic(x, y)
 
     # Modify matrix and right hand side vector to include essential BC's
@@ -55,8 +54,8 @@ class Poisson:
                 self.A[self.nnox * (self.nnoy - 1) + i, j] = 0.0 
             self.A[i, i] = 1.0
             self.A[((self.nnoy - 1) * self.nnox) + i, (self.nnox * (self.nnoy - 1)) + i] = 1.0
-            self.b[i] = self.essBC(i * self.dx, self.ymin)
-            self.b[self.nnox * (self.nnoy - 1) + i] = self.essBC(i * self.dx, self.ymax)
+            self.b[i] = self.essBC(i * self.dx, self.ymin, 4)
+            self.b[self.nnox * (self.nnoy - 1) + i] = self.essBC(i * self.dx, self.ymax, 2)
 
         # Boundary conditions for left and right boundaries of a rectangle
         for i in range(0, self.nnoy):
@@ -65,8 +64,8 @@ class Poisson:
                 self.A[(self.nnox - 1) + (i * self.nnox), j] = 0.0
             self.A[i * self.nnox, i * self.nnox] = 1.0
             self.A[(self.nnox - 1) + i * self.nnox, (self.nnox - 1) + i * self.nnox] = 1.0
-            self.b[i * self.nnox] = self.essBC(self.xmin, i * self.dy)
-            self.b[(self.nnox - 1) + (i * self.nnox)] = self.essBC(self.xmax, i * self.dy)
+            self.b[i * self.nnox] = self.essBC(self.xmin, i * self.dy, 3)
+            self.b[(self.nnox - 1) + (i * self.nnox)] = self.essBC(self.xmax, i * self.dy, 1)
         
     def solve(self):
 
@@ -74,11 +73,7 @@ class Poisson:
         self.fillEssBC()
         self.phi = np.linalg.solve(self.A, self.b)
 
-        # Solution along an y center line. For comparison with analytic solution
-        for i in range(0, self.nnox):
-            self.u[i] = self.phi[int(self.nnoy / 2) * self.nnox + i]
-            self.analy[i] = self.analytic(i * self.dx, 0.5)
-
+        
         # Nodal values of solution
         for i in range(0, self.nnoy):
             for j in range(0, self.nnox):
@@ -101,6 +96,6 @@ class Poisson:
 # Solve to verify that analytical solution is reproduced
 if __name__ == '__main__':
 
-    solver = Poisson(11,11, 1, 1, 0, 0)
+    solver = Poisson(51,51, 1, 1, 0, 0)
     solver.solve()
     solver.compare2analytic()

@@ -3,7 +3,7 @@ import numpy as np
 from DiscPrms import *
 import PySimpleGUI as sg
 import comboplot as plotter
-
+from RHS import RHS
 
 # Solves a general differential equation using FEM
 class FEM:
@@ -94,6 +94,7 @@ class PoissonFEM(FEM):
 
     def __init__(self, params, grid_):
         super().__init__(params, grid_)
+        self.rhs = RHS()
 
     def integrands(self, elem, elmat, elvec):
         x_val_loc = elem.coor_at_itg_pt[0]
@@ -104,7 +105,7 @@ class PoissonFEM(FEM):
             for j in range(1, elem.nbf + 1):
                 for k in range(1, nsd+1):
                     elmat[i-1,j-1] += elem.dN(i, k)*elem.dN(j, k)*elem.detJxW
-            elvec[i-1] += -self.f(x_val_loc, y_val_loc)*elem.N(i)*elem.detJxW
+            elvec[i-1] += -self.rhs.f(x_val_loc, y_val_loc)*elem.N(i)*elem.detJxW
 
 # Note: This function is not yet implemented,
 # implying that du/dn = 0 on boundaries on which 
@@ -118,12 +119,9 @@ class PoissonFEM(FEM):
                 for k in range(1, nsd+1):
                     pass # elmat[i-1,j-1] += elem.N(i)*elem.dN(j, k)*elem.detJxW
 
-    # Right hand side
-    def f(self, x, y):
-        return 0 # x*x
     # Analytic solution for test
     def analytic(self, x, y):
-        return 700*x*y + x + y # (x**4/12) + (x/12)
+        return (x**4/12) + (x/12)
     
     def essBC(self, x_val, y_val, bo_ind):
         return self.analytic(x_val, y_val)
@@ -144,7 +142,7 @@ if __name__ == '__main__':
 
     parameters = DiscPrms(nnx=45, nny=45, dt=-1, t_max=-1)
     grid = Grid2d(parameters)
-    boind_list = [1, 2, 3, 4]
+    boind_list = [1, 3]
     grid.setBoindWithEssBC(boind_list)
     sim = PoissonFEM(parameters, grid)
     sim.solve(-1)

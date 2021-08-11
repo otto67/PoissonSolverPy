@@ -2,6 +2,8 @@ from Poisson import Poisson
 import DiscPrms as dsc 
 import PySimpleGUI as sg
 import FEM
+from RHS import polynomialRHS
+from BC import constBC
 
 # Derived class to implement the right hand side  
 # and boundary conditions for FDM
@@ -9,32 +11,13 @@ class PoissonSub(Poisson):
 
     def __init__(self, nno_x, nno_y, xmax, ymax, xmin, ymin):
         super().__init__(nno_x, nno_y, xmax, ymax, xmin, ymin)
-        self.rhs_ = []
-        self.bcs_ = [0,0,0,0]
+        self.bc = constBC()
+        self.rhs = polynomialRHS()
 
-    def essBC(self, x, y):
-        if x < self.dx:
-            return self.bcs_[2]
-        if x > 1 - self.dx:
-            return self.bcs_[3]
-        if y > 1 - self.dy:
-            return self.bcs_[1]
-        if y < self.dy:
-            return self.bcs_[0]
-
-        return 0
-
-    def f(self, x, y):
-        retval = 0.0
-        if len(self.rhs_) == 1:  # Constant right hand side
-            retval = self.rhs_[0]
-        elif len(self.rhs_) == 3: # Linear rhs
-            retval = self.rhs_[0]*x + self.rhs_[1]*y + self.rhs_[2]
-        elif len(self.rhs_) == 6: # Quadratic rhs
-            retval = self.rhs_[0]*x**2 + self.rhs_[1]*y**2 + self.rhs_[2]*x*y + \
-                     self.rhs_[3]*x + self.rhs_[4]*y + self.rhs_[5]
-
+    def essBC(self, x, y, boind):
+        retval = self.bc.essBC(x,y,boind)
         return retval
+
 
 # Derived class to implement the right hand side  
 # and boundary conditions for FEM solution
@@ -42,35 +25,12 @@ class FEMPoissonSub(FEM.PoissonFEM):
 
     def __init__(self, params_, grid_):
         super().__init__(params_, grid_)
-        self.rhs_ = []
-        self.bcs_ = [0,0,0,0]
-
+        self.bc = constBC()
+        self.rhs = polynomialRHS()
+        
     # Only constant essbc's for now 
     def essBC(self, x, y, boind):
-        dx = self.prms.x_max / (self.prms.nno_x - 1)
-        dy = self.prms.y_max / (self.prms.nno_x - 1)
-
-        if x < dx:
-            return self.bcs_[2]
-        if x > 1 - dx:
-            return self.bcs_[3]
-        if y > 1 - dy:
-            return self.bcs_[1]
-        if y < dy:
-            return self.bcs_[0]
-
-        return 0
-
-    def f(self, x, y):
-        retval = 0.0
-        if len(self.rhs_) == 1:  # Constant right hand side
-            retval = self.rhs_[0]
-        elif len(self.rhs_) == 3: # Linear right hand side
-            retval = self.rhs_[0]*x + self.rhs_[1]*y + self.rhs_[2]
-        elif len(self.rhs_) == 6: # Quadratic right hand side
-            retval = self.rhs_[0]*x**2 + self.rhs_[1]*y**2 + self.rhs_[2]*x*y + \
-                     self.rhs_[3]*x + self.rhs_[4]*y + self.rhs_[5]
-
+        retval = self.bc.essBC(x,y,boind)
         return retval
 
 # Parses a float from a string 
@@ -281,10 +241,10 @@ if __name__ == '__main__':
                 grid.setBoindWithEssBC(boind_list)                
 
                 sim = FEMPoissonSub(parameters, grid)
-                sim.rhs_ = parse_rhs(values['Right hand side'], values['rhs_coeff'].strip())
-                sim.bcs_ = parse_bc(values)
-                if not sim.rhs_:
-                    print("Illegal right hand side ", sim.rhs_)
+                sim.rhs.attachRHS(parse_rhs(values['Right hand side'], values['rhs_coeff'].strip()))
+                sim.bc.attachBC(parse_bc(values))
+                if not sim.rhs.rhs:
+                    print("Illegal right hand side ", sim.rhs.rhs)
                     continue
                 
                 sim.solve(-1)
@@ -292,10 +252,13 @@ if __name__ == '__main__':
             else: # Finite differences
                 print("Creating FDM solver")
                 solver = PoissonSub(nno_x, nno_y, x_max, y_max, x_min, y_min)
-                solver.rhs_ = parse_rhs(values['Right hand side'], values['rhs_coeff'].strip())
-                solver.bcs_ = parse_bc(values)
-                if not solver.rhs_:
-                    print("Illegal right hand side ", solver.rhs_)
+                solver.rhs.attachRHS(parse_rhs(values['Right hand side'], values['rhs_coeff'].strip()))
+                solver.bc.attachBC(parse_bc(values))
+
+                print(parse_bc(values))
+
+                if not solver.rhs.rhs:
+                    print("Illegal right hand side ", solver.rhs.rhs)
                     continue
 
                 solver.solve()

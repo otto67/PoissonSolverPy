@@ -128,10 +128,8 @@ class Elm4bn4gf(Elm2d):
         x_0 = self.l_l_c[0]
         y_0 = self.l_l_c[1]
 
-        # Global coordinates transformed into "integration domain"
+        # Global coordinates transformed into integration domain
         # for use in right hand side
-#        self.coor_at_itg_pt = [x_0 + (self.dx/2.0) * (self.curr_itg_pt[0] + 1.0), 
-#        y_0 + (self.dy/2.0) * (self.curr_itg_pt[1] + 1.0)]
         self.coor_at_itg_pt = [x_0 + ((self.dx/2.0) * (self.curr_itg_pt[0] + 1.0)), 
         y_0 + ((self.dy/2.0) * (self.curr_itg_pt[1] + 1.0))]
 
@@ -150,9 +148,7 @@ class Elm4bn4gf(Elm2d):
 
         x_0 = self.l_l_c[0]
         y_0 = self.l_l_c[1]
-        x_1 = x_0 + self.dx
-        y_1 = y_0 + self.dy
-
+     
         self.coor_at_itg_pt = [((self.dx/2) * (self.curr_itg_pt[0] +1))]
 
 
@@ -175,7 +171,6 @@ class Grid2d:
         for e in range(self.n_elms):
             elm = Elm4bn4gf()
             x0 = [(e % (prms.nno_x-1))*dx, (e // (prms.nno_x-1))*dy]
-
             elm.setPrms(x0, dx, dy, e, -1)
             self.elems.append(elm)
            
