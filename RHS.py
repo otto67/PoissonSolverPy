@@ -1,6 +1,6 @@
 
-# Class for providing the right hand side of the equation
-# both for FDM and FEM
+# Class providing the right hand side of the equation
+# for both FDM and FEM
 class RHS:
     def __init__(self) -> None:
         pass

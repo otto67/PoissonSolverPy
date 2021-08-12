@@ -14,11 +14,6 @@ class PoissonSub(Poisson):
         self.bc = constBC()
         self.rhs = polynomialRHS()
 
-    def essBC(self, x, y, boind):
-        retval = self.bc.essBC(x,y,boind)
-        return retval
-
-
 # Derived class to implement the right hand side  
 # and boundary conditions for FEM solution
 class FEMPoissonSub(FEM.PoissonFEM):
@@ -28,10 +23,6 @@ class FEMPoissonSub(FEM.PoissonFEM):
         self.bc = constBC()
         self.rhs = polynomialRHS()
         
-    # Only constant essbc's for now 
-    def essBC(self, x, y, boind):
-        retval = self.bc.essBC(x,y,boind)
-        return retval
 
 # Parses a float from a string 
 def string2float(str):

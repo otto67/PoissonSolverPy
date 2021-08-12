@@ -4,6 +4,7 @@ from DiscPrms import *
 import PySimpleGUI as sg
 import comboplot as plotter
 from RHS import RHS
+from BC import BC
 
 # Solves a general differential equation using FEM
 class FEM:
@@ -11,16 +12,14 @@ class FEM:
     def __init__(self, params, grid_):
         self.prms = params
         self.grid = grid_
+        self.bc = BC()
 
     def fillEssBC(self):
         for i in range(self.prms.nno_x):
             for j in range(self.prms.nno_y):
                 if self.grid.isBoNode(i, j):
                     info = self.grid.boNodeMap[i][j]
-                    self.grid.addBC(i, j, self.essBC(info[0], info[1], info[2]))
-
-    def essBC(self, x_val, y_val, bound_o):
-        raise NotImplementedError()
+                    self.grid.addBC(i, j, self.bc.essBC(info[0], info[1], info[2]))
 
     def integrands(self, elem, elmat, elvec):
         raise NotImplementedError()
@@ -123,9 +122,6 @@ class PoissonFEM(FEM):
     def analytic(self, x, y):
         return (x**4/12) + (x/12)
     
-    def essBC(self, x_val, y_val, bo_ind):
-        return self.analytic(x_val, y_val)
-
     def compare2analytic(self):
 
         sol = self.grid.interpolSolution()

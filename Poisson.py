@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import comboplot as plotter
 from RHS import RHS
+from BC import BC
 
 class Poisson:
 
@@ -21,6 +22,7 @@ class Poisson:
         self.solu = np.zeros((nnoy, nnox))
 
         self.rhs = RHS()
+        self.bc = BC()
 
     def analytic(self, x, y):
         return (x**4/12) + (x/12)
@@ -41,10 +43,6 @@ class Poisson:
                 x, y = j*h1, i * h2
                 self.b[i * self.nnox + j] = self.rhs.f(x, y)
 
-    # Actual (essential) boundary conditions
-    def essBC(self, x, y, boind):
-        return self.analytic(x, y)
-
     # Modify matrix and right hand side vector to include essential BC's
     def fillEssBC(self):
         # Boundary conditions for upper and lower boundaries of a rectangle
@@ -54,8 +52,8 @@ class Poisson:
                 self.A[self.nnox * (self.nnoy - 1) + i, j] = 0.0 
             self.A[i, i] = 1.0
             self.A[((self.nnoy - 1) * self.nnox) + i, (self.nnox * (self.nnoy - 1)) + i] = 1.0
-            self.b[i] = self.essBC(i * self.dx, self.ymin, 4)
-            self.b[self.nnox * (self.nnoy - 1) + i] = self.essBC(i * self.dx, self.ymax, 2)
+            self.b[i] = self.bc.essBC(i * self.dx, self.ymin, 4)
+            self.b[self.nnox * (self.nnoy - 1) + i] = self.bc.essBC(i * self.dx, self.ymax, 2)
 
         # Boundary conditions for left and right boundaries of a rectangle
         for i in range(0, self.nnoy):
@@ -64,8 +62,8 @@ class Poisson:
                 self.A[(self.nnox - 1) + (i * self.nnox), j] = 0.0
             self.A[i * self.nnox, i * self.nnox] = 1.0
             self.A[(self.nnox - 1) + i * self.nnox, (self.nnox - 1) + i * self.nnox] = 1.0
-            self.b[i * self.nnox] = self.essBC(self.xmin, i * self.dy, 3)
-            self.b[(self.nnox - 1) + (i * self.nnox)] = self.essBC(self.xmax, i * self.dy, 1)
+            self.b[i * self.nnox] = self.bc.essBC(self.xmin, i * self.dy, 3)
+            self.b[(self.nnox - 1) + (i * self.nnox)] = self.bc.essBC(self.xmax, i * self.dy, 1)
         
     def solve(self):
 

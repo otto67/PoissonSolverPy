@@ -5,12 +5,14 @@ class BC:
     def __init__(self) -> None:
         pass
 
+# Analytic solution for f = x*x
     def essBC(self, x, y, boind):
-        return 0
+        return (x**4/12) + (x/12)
     
     def attachBC(bcs_):
         pass
 
+# Constant bc's on all boundaries
 class constBC(BC):
     def __init__(self) -> None:
         self.bcs = []
@@ -23,14 +25,13 @@ class constBC(BC):
         if not self.bcs:
             return 0.0 
 
+        if boind == 1:
+            return self.bcs[0]
+        if boind == 2:
+            return self.bcs[1]
         if boind == 3:
             return self.bcs[2]
         if boind == 4:
-            return self.bcs[3]
-        if boind == 2:
-            return self.bcs[1]
-        if boind == 1:
-            print(self.bcs[0])
-            return self.bcs[0]
+            return self.bcs[3]  
         
         return 0.0
