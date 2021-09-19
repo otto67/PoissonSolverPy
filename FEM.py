@@ -6,7 +6,9 @@ import comboplot as plotter
 from RHS import RHS
 from BC import BC
 
-# Solves a general differential equation using FEM
+# Equation system assembly and solution for a general differential equation using FEM
+# This class is not to be instantiated, as it does not implement any integrand for the
+# integral
 class FEM:
 
     def __init__(self, params, grid_):
@@ -14,6 +16,7 @@ class FEM:
         self.grid = grid_
         self.bc = BC()
 
+    # Adds bc's to the dictionary of the grid object
     def fillEssBC(self):
         for i in range(self.prms.nno_x):
             for j in range(self.prms.nno_y):
@@ -21,19 +24,24 @@ class FEM:
                     info = self.grid.boNodeMap[i][j]
                     self.grid.addBC(i, j, self.bc.essBC(info[0], info[1], info[2]))
 
+    # Integrand for the integral to be calculated
     def integrands(self, elem, elmat, elvec):
         raise NotImplementedError()
 
+    # Integrand for boundary in case of neuman bc's
     def integrandsBound(self, elem, elmat, elvec):
         raise NotImplementedError()
-
-    def numItgOverBoundary(self, i, time, elmat, elmvec):
+    
+    # Numerical integration over boundary
+    # Assembles into local element matrix and vector
+    def numItgOverBoundary(self, i, time, elm_mat, elm_vec):
         elem = self.grid.elems[i]
         for pt in range(1, 3):
             elem.initAtItgPtBound(pt)
-            self.integrandsBound(elem, elmat, elmvec)
+            self.integrandsBound(elem, elm_mat, elm_vec)
 
-
+    # Numerical integration over element
+    # Assembles into local element matrix and vector
     def numItgOverElm(self, i, time, elmat, elmvec):
         elem = self.grid.elems[i]
         # Only one integration rule implemented so far. 
@@ -42,7 +50,8 @@ class FEM:
             elem.initAtItgPt(pt)
             self.integrands(elem, elmat, elmvec)
 
-
+    # Loops over all element and adds local element contributions to
+    # global equation system
     def assembleLinEqSys(self, time):
 
         # Assume equal elements throughout
@@ -122,6 +131,8 @@ class PoissonFEM(FEM):
     def analytic(self, x, y):
         return (x**4/12) + (x/12)
     
+    # Compares nodal solution to analytic solution for test case 
+    # and reports the L2 error
     def compare2analytic(self):
 
         sol = self.grid.interpolSolution()

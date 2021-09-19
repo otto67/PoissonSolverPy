@@ -11,8 +11,9 @@ class RHS:
     def attachRHS(self, rhs_):
         pass
 
-
+# Polynomial RHS
 class polynomialRHS(RHS):
+        
     def __init__(self) -> None:
         self.rhs = []
     

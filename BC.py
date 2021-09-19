@@ -6,9 +6,14 @@ class BC:
         pass
 
 # Analytic solution for f = x*x
+# x,y - positions in domain, floats
+# boind - boundary index, integer
     def essBC(self, x, y, boind):
         return (x**4/12) + (x/12)
     
+# Boundary conditions prescribed through 
+# PySimpleGUI
+# bcs_ - List of boundary conditions for boundary indexes
     def attachBC(bcs_):
         pass
 

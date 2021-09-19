@@ -4,6 +4,7 @@ import comboplot as plotter
 from RHS import RHS
 from BC import BC
 
+# Class for solving a Poisson equation using FDM 
 class Poisson:
 
     def __init__(self, nnox=41, nnoy=41, xmax=1, ymax=1, xmin=0, ymin=0):
@@ -80,7 +81,7 @@ class Poisson:
         plotter.plot(self.solu, 1/self.nnox)
 
     
-    # Compare nodal values of solution
+    # Compare nodal values of solution, report L2 error
     def compare2analytic(self):
 
         l2error = 0.0        

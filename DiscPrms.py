@@ -29,17 +29,34 @@ class Elm2d:
         self.detJxW = 0.0
 
     def setPrms(self, x0, lenx, leny, elm_no, lb):
-        raise NotImplementedError()
+        """[summary]
 
+        Args:
+            x0 (tuple): x, y position of lower left corner of element
+            lenx (float): element length in x direction (dx)
+            leny (float): element length in y direction (dy)
+            elm_no (integer): Element number in the grid
+            lb ([type]): [description]
+
+        Raises:
+            NotImplementedError: Must be implemented in a subclass
+        """        
+        raise NotImplementedError()
+    
+    # Basis function number i
     def N(self, i):
         raise NotImplementedError()
 
+    # Derivative of basis function number i in direction dir_
     def dN(self, i, dir_):
         raise NotImplementedError()
 
+    # Initializes coordinate values at an integration point in 
+    # reference element. Also maps global coordinates to reference element for integration
     def initAtItgPt(self, coor):
         raise NotImplementedError()
 
+    # Initializes for boundary integration
     def initAtItgPtBound(self, pt):
         raise NotImplementedError()
 
@@ -167,6 +184,7 @@ class Grid2d:
         dx = prms.dx
         dy = prms.dy
 
+        # initialize elements and append to element list
         self.elems = []
         for e in range(self.n_elms):
             elm = Elm4bn4gf()
@@ -178,13 +196,14 @@ class Grid2d:
         self.b = np.zeros(prms.nno_x * prms.nno_y)
         self.phi = np.zeros(prms.nno_x * prms.nno_y)
 
+        # Maps element nodes to global degree of freedom 
         self.dofmap = []
 
         for j in range(0, prms.nno_y-1):
             for i in range(0, prms.nno_x-1):
                 self.dofmap.append((j*prms.nno_y + i, j*prms.nno_y + i + 1, (j+1)*prms.nno_y + i + 1, (j+1)*prms.nno_y + i))
 
-       
+        # Assigns coordinates and boundary number for boundary nodes 
         self.boNodeMap = [[[] for i in range(prms.nno_x)] for j in range(prms.nno_y)]
         for j in range(prms.nno_y):
             self.boNodeMap[0][j] = [0, j*dy, 3]
@@ -193,7 +212,8 @@ class Grid2d:
         for i in range(prms.nno_x):
             self.boNodeMap[i][0] = [i*dx, 0, 4]
             self.boNodeMap[i][prms.nno_x-1] = [i*dx, 1, 2]
-
+    
+    # Adds boundary conditions for node (i,j) into map
     def addBC(self, i, j, val):
         globdof = j*self.dscprms.nno_x + i
         self.ess_bc_nodes.update({globdof: val})
@@ -206,13 +226,14 @@ class Grid2d:
     def setBoindWithEssBC(self, list):
         self.boinds_with_essBC = list
 
+    # Checks is node (i,j) is on any boundary with bc prescribed 
     def isBoNode(self, i, j):
         if (self.boNodeMap[i][j]):
             if (self.boNodeMap[i][j][2] in self.boinds_with_essBC):
                 return True
         return False
 
-    # Solution at nodal points
+    # Interpolate solution at nodal points
     def interpolSolution(self):
         solu = np.zeros((self.dscprms.nno_x, self.dscprms.nno_y))
         for i in range(self.dscprms.nno_x):
@@ -222,6 +243,7 @@ class Grid2d:
 
 if __name__ == '__main__':
 
+    # For testing
     parameters = DiscPrms(nnx=17, nny =17, dt=1000, t_max=2000)
     grid = Grid2d(parameters)
     grid.setBoindWithEssBC([2, 4])
